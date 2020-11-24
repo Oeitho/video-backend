@@ -21,8 +21,16 @@ const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });
 
+const video = {
+    current: 'https://www.youtube.com/watch?v=qjG7TqoQog4'
+};
+
 wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (message: string) => {
+        const json = JSON.parse(message);
+        if (json.command ==='url') {
+            video.current = json.url;
+        }
         wss.clients
             .forEach(client => {
                 client.send(`${message}`);
@@ -118,6 +126,11 @@ app.route('/author/:id')
                 res.send(data.name)
             })
             .catch(() => res.status(401).send);
+    });
+
+app.route('/video')
+    .get((req, res) => {
+        res.send(video);
     });
 
 server.listen(port, () => {
