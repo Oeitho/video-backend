@@ -2,13 +2,11 @@ FROM node:14.15.1-alpine3.12
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY . .
 
 RUN yarn install --production
 
-COPY . .
-
-RUN yarn tsc
+RUN yarn postinstall
 
 EXPOSE 8080
 

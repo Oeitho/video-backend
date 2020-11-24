@@ -5,6 +5,8 @@ const pgp = require('pg-promise')();
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
+const port = process.env.PORT || 8080;
+
 const PG_USERNAME = process.env.POSTGRES_USER;
 const PG_PASSWORD = process.env.POSTGRES_PASSWORD;
 const PG_DB = process.env.POSTGRES_DB;
@@ -116,8 +118,8 @@ app.route('/author/:id')
                 res.send(data.name)
             })
             .catch(() => res.status(401).send);
-    })
+    });
 
-server.listen(8080, () => {
-    console.log('App is listening on port 8080');
+server.listen(port, () => {
+    console.log(`App is listening on port ${port}`);
 });

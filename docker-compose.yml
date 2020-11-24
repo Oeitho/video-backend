@@ -19,5 +19,6 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: video
+      PROD: 0
     ports:
       - "8080:8080"
