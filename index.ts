@@ -67,19 +67,32 @@ app.route('/chat')
             .then((data: { chat_message: string, id: number, user_id: number }) => res.send({ messages: data }));
     })
     .post(async(req, res) => {
-        const id = req.headers.id;
+        const user_id = req.headers.id;
         const secret = req.headers.secret;
-        if (isNotDefinedString(id) || isNotDefinedString(secret)) res.status(401).send();
-        else await db.one('SELECT name FROM author WHERE id = $1 AND secret = $2', [id, secret])
+        if (isNotDefinedString(user_id) || isNotDefinedString(secret)) res.status(401).send();
+        else await db.one('SELECT name FROM author WHERE id = $1 AND secret = $2', [user_id, secret])
             .then(async () => { 
                 const body = req.body;
                 const message = body.message;
-                if (id === null && message === null) {
+                if (user_id === null && message === null) {
                     res.status(401).send();
                     return;
                 }
-                await db.none("INSERT INTO message (user_id, chat_message) VALUES ($1, $2)", [id, message])
-                    .then(() => res.send());
+                await db.one("INSERT INTO message (user_id, chat_message) VALUES ($1, $2) RETURNING id", [user_id, message])
+                    .then((result: { id: any }) => {
+                        wss.clients
+                            .forEach(client => {
+                                client.send(JSON.stringify({
+                                    command: 'chat',
+                                    message: {
+                                        chat_message: message,
+                                        id: result.id,
+                                        user_id: user_id
+                                    }
+                                }));
+                            })
+                        res.send();
+                    });
             })
             .catch(() => res.status(401).send);
     });
@@ -111,7 +124,7 @@ app.route('/author/:id')
         const name = body.name;
         const id = req.params.id;
         const secret = req.headers.secret;
-        if (parseInt(id) === NaN || isNotDefinedString(name) || isNotDefinedString(secret)) res.status(400).send();
+        if (parseInt(id) === NaN || isNotDefinedString(name) || isNotDefinedString(secret) || name === 'Unknown author') res.status(401).send();
         else await db.one('UPDATE author SET name = $1 WHERE id = $2 AND secret = $3 RETURNING name', [name, id, secret])
             .then(() => { 
                 res.send();
