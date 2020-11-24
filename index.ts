@@ -10,7 +10,8 @@ const PG_PASSWORD = process.env.POSTGRES_PASSWORD;
 const PG_DB = process.env.POSTGRES_DB;
 const PG_HOST = process.env.POSTGRES_HOST || 'db';
 const PG_PORT = process.env.POSTGRES_PORT || 5432;
-const db = pgp(`postgres://${PG_USERNAME}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB}`);
+const PG_URL = process.env.DATABASE_URL || `postgres://${PG_USERNAME}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB}`;
+const db = pgp(PG_URL);
 
 const app: express.Application = express();
 
