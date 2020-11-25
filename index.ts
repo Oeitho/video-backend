@@ -75,7 +75,7 @@ app.route('/chat')
                 const body = req.body;
                 const message = body.message;
                 if (user_id === null && message === null) {
-                    res.status(401).send();
+                    res.status(403).send();
                     return;
                 }
                 await db.one("INSERT INTO message (user_id, chat_message) VALUES ($1, $2) RETURNING id", [user_id, message])
@@ -117,6 +117,17 @@ app.route('/author')
              })
             .catch((error: any) => console.log(`Error: ${error}`));
     });
+
+app.route('/author/self')
+    .get(async (req, res) => {
+        const user_id = req.headers.id;
+        const secret = req.headers.secret;
+        if (isNotDefinedString(user_id) || isNotDefinedString(secret)) res.status(403).send();
+        await db.one('SELECT name FROM author WHERE id = $1 AND secret = $2', [user_id, secret])
+            .then(() => res.send())
+            .catch(() => res.status(403).send());
+    });
+
 
 app.route('/author/:id')
     .patch(async (req, res) => {
