@@ -61,6 +61,36 @@ app.route('/')
         res.send('Hello world');
     })
 
+const broadcase_message = async (user_id: string, message: string, result: { id: any }) => {
+    wss.clients
+        .forEach(client => {
+            client.send(JSON.stringify({
+                command: 'chat',
+                    payload: {
+                        message: {
+                            chat_message: message,
+                            id: result.id,
+                            user_id: user_id
+                        }
+                    }
+            }));
+        })
+}
+
+const author_verified = async (req: any, res: any, user_id: string) => { 
+    const body = req.body;
+    const message = body.message;
+    if (user_id && message === null) {
+        res.status(403).send();
+        return;
+    }
+    await db.one("INSERT INTO message (user_id, chat_message) VALUES ($1, $2) RETURNING id", [user_id, message])
+        .then((result: { id: any }) => {
+            broadcase_message(user_id, message, result)
+            res.send();
+        });
+}
+
 app.route('/chat')
     .get(async(req, res) => {
         await db.any("SELECT chat_message, id, user_id FROM message ORDER BY id DESC LIMIT 50")
@@ -71,31 +101,8 @@ app.route('/chat')
         const secret = req.headers.secret;
         if (isNotDefinedString(user_id) || isNotDefinedString(secret)) res.status(401).send();
         else await db.one('SELECT name FROM author WHERE id = $1 AND secret = $2', [user_id, secret])
-            .then(async () => { 
-                const body = req.body;
-                const message = body.message;
-                if (user_id === null && message === null) {
-                    res.status(403).send();
-                    return;
-                }
-                await db.one("INSERT INTO message (user_id, chat_message) VALUES ($1, $2) RETURNING id", [user_id, message])
-                    .then((result: { id: any }) => {
-                        wss.clients
-                            .forEach(client => {
-                                client.send(JSON.stringify({
-                                    command: 'chat',
-                                    payload: {
-                                        message: {
-                                            chat_message: message,
-                                            id: result.id,
-                                            user_id: user_id
-                                        }
-                                    }
-                                }));
-                            })
-                        res.send();
-                    });
-            })
+            // @ts-ignore user_id must be string because of the isNotDefinedString test
+            .then(() => author_verified(req, res, user_id))
             .catch(() => res.status(401).send);
     });
 
