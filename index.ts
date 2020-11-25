@@ -84,10 +84,12 @@ app.route('/chat')
                             .forEach(client => {
                                 client.send(JSON.stringify({
                                     command: 'chat',
-                                    message: {
-                                        chat_message: message,
-                                        id: result.id,
-                                        user_id: user_id
+                                    payload: {
+                                        message: {
+                                            chat_message: message,
+                                            id: result.id,
+                                            user_id: user_id
+                                        }
                                     }
                                 }));
                             })
