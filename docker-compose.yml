@@ -16,9 +16,6 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: video
-      PROD: 0
+      DATABASE_URL: postgres://admin:admin@db:5432/video
     ports:
       - "8080:8080"
