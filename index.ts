@@ -23,7 +23,7 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (message: string) => {
         const json = JSON.parse(message);
         if (json.command ==='url') {
-            video.current = json.url;
+            video.current = json.payload.url;
         }
         wss.clients
             .forEach(client => {
